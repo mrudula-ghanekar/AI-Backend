@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api") // ✅ Base path for all API
-@CrossOrigin(origins = "http://localhost:3000") // ✅ Frontend CORS allowed
+@CrossOrigin(origins = "https://ai-resume-frontend-mg.vercel.app/") // ✅ Frontend CORS allowed
 public class ResumeController {
 
     @Autowired
