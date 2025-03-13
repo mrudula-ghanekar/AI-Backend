@@ -1,4 +1,4 @@
-package com.resumehelp;
+package com.resumehelp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +13,11 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("https://ai-resume-frontend-mg.vercel.app") // ✅ FRONTEND URL
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(false); // If using cookies, set to true
+                registry.addMapping("/api/**") // ✅ Allow all /api paths
+                        .allowedOrigins("https://ai-resume-frontend-mg.vercel.app") // ✅ Your Vercel frontend URL
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // ✅ Allow necessary HTTP methods
+                        .allowedHeaders("*") // ✅ Allow all headers
+                        .allowCredentials(true); // ✅ Optional if cookies/session are needed
             }
         };
     }
