@@ -14,10 +14,10 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://ai-resume-frontend-mg.vercel.app") // ✅ your actual frontend URL
+                        .allowedOrigins("https://ai-resume-frontend-mg.vercel.app") // ✅ FRONTEND URL
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(false);
+                        .allowCredentials(false); // If using cookies, set to true
             }
         };
     }
