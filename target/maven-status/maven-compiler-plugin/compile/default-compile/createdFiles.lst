@@ -1,0 +1,4 @@
+com\resumehelp\service\ResumeService.class
+com\resumehelp\controller\ResumeController.class
+com\resumehelp\service\OpenAIService.class
+com\resumehelp\ResumeHelpApplication.class
