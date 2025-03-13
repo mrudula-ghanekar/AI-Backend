@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ResumeHelpApplication {
+public class ResumeHelpBackendApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ResumeHelpApplication.class, args);
+        SpringApplication.run(ResumeHelpBackendApplication.class, args);
     }
 }

@@ -15,10 +15,10 @@ public class OpenAIService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+
     // ✅ Analyze Resume for Candidate/Company Mode
     public String analyzeResume(String resumeText, String role, String mode) {
-        String endpoint = "https://api.openai.com/v1/chat/completions";
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
@@ -39,7 +39,7 @@ public class OpenAIService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(endpoint, HttpMethod.POST, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(OPENAI_API_URL, HttpMethod.POST, request, Map.class);
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             String aiResponse = message.get("content").toString().trim();
@@ -51,14 +51,13 @@ public class OpenAIService {
             }
             return "{\"error\":\"Invalid AI Response\"}";
         } catch (Exception e) {
-            return "{\"error\":\"API Error: " + e.getMessage() + "\"}";
+            e.printStackTrace();
+            return "{\"error\":\"API Error: " + e.getMessage().replace("\"", "'") + "\"}";
         }
     }
 
     // ✅ Improve Resume for Candidate
     public String generateImprovedResume(String resumeText, String role) {
-        String endpoint = "https://api.openai.com/v1/chat/completions";
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
@@ -76,19 +75,18 @@ public class OpenAIService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(endpoint, HttpMethod.POST, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(OPENAI_API_URL, HttpMethod.POST, request, Map.class);
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             return message.get("content").toString().trim();
         } catch (Exception e) {
+            e.printStackTrace();
             return "❌ Error generating improved resume: " + e.getMessage();
         }
     }
 
     // ✅ Batch Resume Comparison
     public String compareResumesInBatch(List<String> resumeTexts, String role) {
-        String endpoint = "https://api.openai.com/v1/chat/completions";
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
@@ -112,11 +110,12 @@ public class OpenAIService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(endpoint, HttpMethod.POST, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(OPENAI_API_URL, HttpMethod.POST, request, Map.class);
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             return message.get("content").toString().trim();
         } catch (Exception e) {
+            e.printStackTrace();
             return "❌ Error during batch comparison: " + e.getMessage();
         }
     }

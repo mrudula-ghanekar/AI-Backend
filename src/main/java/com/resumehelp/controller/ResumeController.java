@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api") // ✅ Base path for all API
-@CrossOrigin(origins = "https://ai-resume-frontend-mg.vercel.app/") // ✅ Frontend CORS allowed
+@CrossOrigin(origins = "https://ai-resume-frontend-mg.vercel.app/") // ✅ Vercel Frontend CORS allowed
 public class ResumeController {
 
     @Autowired
@@ -30,6 +30,7 @@ public class ResumeController {
             String resumeText = stripper.getText(document);
             System.out.println("✅ Extracted Resume Text:\n" + resumeText);
 
+            // Call service for analysis
             String analysis = openAIService.analyzeResume(resumeText, role, mode);
             return ResponseEntity.ok(analysis);
         } catch (IOException e) {
@@ -38,7 +39,7 @@ public class ResumeController {
         }
     }
 
-    // ✅ 2. Improve Resume for Candidate Mode
+    // ✅ 2. Improve Resume for Candidate Mode (returns AI-enhanced resume)
     @PostMapping("/improve")
     public ResponseEntity<String> improveResume(@RequestParam("file") MultipartFile file,
                                                 @RequestParam("role") String role) {
@@ -47,6 +48,7 @@ public class ResumeController {
             String resumeText = stripper.getText(document);
             System.out.println("✅ Extracted Resume Text for Improvement:\n" + resumeText);
 
+            // Call service to improve resume
             String improvedResume = openAIService.generateImprovedResume(resumeText, role);
             return ResponseEntity.ok(improvedResume);
         } catch (IOException e) {
@@ -55,7 +57,7 @@ public class ResumeController {
         }
     }
 
-    // ✅ 3. Batch Compare Resumes for Company Mode
+    // ✅ 3. Batch Compare Resumes for Company Mode (Rank candidates based on AI analysis)
     @PostMapping("/compare-batch")
     public ResponseEntity<String> compareBatchResumes(@RequestParam("files") List<MultipartFile> files,
                                                       @RequestParam("role") String role) {
@@ -68,6 +70,10 @@ public class ResumeController {
                     resumeTexts.add(resumeText);
                 }
             }
+
+            System.out.println("✅ Extracted " + resumeTexts.size() + " resumes for batch comparison.");
+
+            // Call service for batch comparison
             String comparisonResult = openAIService.compareResumesInBatch(resumeTexts, role);
             return ResponseEntity.ok(comparisonResult);
         } catch (IOException e) {
@@ -79,12 +85,12 @@ public class ResumeController {
     // ✅ 4. API Health Check
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("✅ ResumeHelp API is working!");
+        return ResponseEntity.ok("✅ ResumeHelp API is working fine!");
     }
 
-    // ✅ 5. Welcome Page
+    // ✅ 5. Root Welcome Endpoint
     @GetMapping("/")
     public ResponseEntity<String> home() {
-        return ResponseEntity.ok("🚀 Welcome to ResumeHelp API! Use /api/health to check API status.");
+        return ResponseEntity.ok("🚀 Welcome to ResumeHelp AI API! Ready to analyze and improve resumes. Use /api/health to check API status.");
     }
 }
