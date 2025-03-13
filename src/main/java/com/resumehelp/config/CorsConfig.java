@@ -1,4 +1,4 @@
-package com.resumehelp;
+package com.resumehelp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("*") // You can replace * with "https://your-frontend-url.vercel.app" for more security
+                        .allowedOrigins("https://ai-resume-frontend-mg.vercel.app") // ✅ your actual frontend URL
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(false);
