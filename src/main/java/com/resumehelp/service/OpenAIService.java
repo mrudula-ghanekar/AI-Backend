@@ -99,4 +99,4 @@ public class OpenAIService {
             return "{\"error\":\"API Error: " + e.getMessage().replace("\"", "'") + "\"}";
         }
     }
-}
+}//backend\AI-Backend\src\main\java\com\resumehelp\service\OpenAIService.java
