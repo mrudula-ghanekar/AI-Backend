@@ -41,22 +41,27 @@ public class OpenAIService {
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison for Company Mode
-    public String compareResumesInBatch(List<String> resumeTexts, String role) {
+    // ✅ Batch Resume Comparison (Accepting fileNames and adding them in AI response)
+    public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
+
+        // ✅ Combine each resume with its file name
         for (int i = 0; i < resumeTexts.size(); i++) {
-            combinedResumes.append("Resume ").append(i + 1).append(":\n").append(resumeTexts.get(i)).append("\n\n");
+            combinedResumes.append("Resume ").append(i + 1)
+                    .append(" (File: ").append(fileNames.get(i)).append("):\n")
+                    .append(resumeTexts.get(i)).append("\n\n");
         }
 
-        String prompt = "You are an expert AI for hiring. Analyze and rank the following resumes for the role of '" + role + "'. "
+        // ✅ Prompt updated to ask for file_name in the result
+        String prompt = "You are an expert hiring AI. Analyze and rank the following resumes for the role of '" + role + "'. "
                 + "Return ONLY valid JSON in this format: "
                 + "{"
                 + "\"best_resume_index\": number, "
-                + "\"best_resume_summary\": \"summary of best resume\", "
+                + "\"best_resume_summary\": string, "
                 + "\"ranking\": [ "
-                + "{ \"index\": number, \"score\": number, \"summary\": \"summary of resume\" }"
+                + "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"score\": number, \"summary\": \"summary of resume\" }"
                 + "]"
-                + "}. No other explanation or extra text.\n\n"
+                + "}. No other explanation or text.\n\n"
                 + "Resumes:\n\n" + combinedResumes;
 
         return callOpenAI(prompt);
@@ -99,4 +104,4 @@ public class OpenAIService {
             return "{\"error\":\"API Error: " + e.getMessage().replace("\"", "'") + "\"}";
         }
     }
-}//backend\AI-Backend\src\main\java\com\resumehelp\service\OpenAIService.java
+}

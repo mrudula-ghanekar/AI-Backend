@@ -54,20 +54,24 @@ public class ResumeController {
         }
     }
 
-    // 3. Batch Compare Resumes for Company Mode
+    // ✅ 3. Batch Compare Resumes for Company Mode (Updated to handle file names)
     @PostMapping("/compare-batch")
     public ResponseEntity<String> compareBatchResumes(@RequestParam("files") List<MultipartFile> files,
                                                       @RequestParam("role") String role) {
         try {
             List<String> resumeTexts = new ArrayList<>();
+            List<String> fileNames = new ArrayList<>(); // ✅ Collect file names
+
             for (MultipartFile file : files) {
                 try (PDDocument document = PDDocument.load(file.getInputStream())) {
                     PDFTextStripper stripper = new PDFTextStripper();
                     String resumeText = stripper.getText(document);
                     resumeTexts.add(resumeText);
+                    fileNames.add(file.getOriginalFilename()); // ✅ Add file name
                 }
             }
-            String comparisonResult = openAIService.compareResumesInBatch(resumeTexts, role);
+            // ✅ Pass both resume texts and filenames to service
+            String comparisonResult = openAIService.compareResumesInBatch(resumeTexts, fileNames, role);
             return ResponseEntity.ok(comparisonResult);
         } catch (IOException e) {
             e.printStackTrace();
