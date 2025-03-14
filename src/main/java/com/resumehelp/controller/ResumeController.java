@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api") // ✅ Base path for all API
+@RequestMapping("/api") // Base path for all APIs
 public class ResumeController {
 
     @Autowired
     private OpenAIService openAIService;
 
-    // ✅ 1. Analyze Single Resume for Candidate/Company Mode
+    // 1. Analyze Single Resume for Candidate/Company Mode
     @PostMapping("/analyze")
     public ResponseEntity<String> analyzeResume(@RequestParam("file") MultipartFile file,
                                                 @RequestParam("role") String role,
@@ -37,7 +37,7 @@ public class ResumeController {
         }
     }
 
-    // ✅ 2. Improve Resume for Candidate Mode
+    // 2. Improve Resume for Candidate Mode
     @PostMapping("/improve")
     public ResponseEntity<String> improveResume(@RequestParam("file") MultipartFile file,
                                                 @RequestParam("role") String role) {
@@ -54,7 +54,7 @@ public class ResumeController {
         }
     }
 
-    // ✅ 3. Batch Compare Resumes for Company Mode
+    // 3. Batch Compare Resumes for Company Mode
     @PostMapping("/compare-batch")
     public ResponseEntity<String> compareBatchResumes(@RequestParam("files") List<MultipartFile> files,
                                                       @RequestParam("role") String role) {
@@ -75,13 +75,13 @@ public class ResumeController {
         }
     }
 
-    // ✅ 4. API Health Check
+    // 4. API Health Check
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("✅ ResumeHelp API is working!");
     }
 
-    // ✅ 5. Welcome Page
+    // 5. Welcome Page
     @GetMapping("/")
     public ResponseEntity<String> home() {
         return ResponseEntity.ok("🚀 Welcome to ResumeHelp API! Use /api/health to check API status.");
