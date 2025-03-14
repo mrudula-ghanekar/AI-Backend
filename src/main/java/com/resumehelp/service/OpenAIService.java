@@ -19,56 +19,45 @@ public class OpenAIService {
 
     // ✅ Analyze Resume for Candidate/Company Mode
     public String analyzeResume(String resumeText, String role, String mode) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        String prompt = "You are an AI resume analyzer. You must analyze whether the following resume is suitable for the role of '" + role + "'. "
-                + "Return ONLY a valid JSON object without extra text in this exact format: "
+        String prompt = "You are an AI resume analyzer. Analyze if this resume fits the role of '" + role + "'. "
+                + "Return ONLY a valid JSON object without any extra text in this exact format: "
                 + "{"
                 + "\"suited_for_role\": \"Yes or No\","
                 + "\"strong_points\": [\"Point 1\", \"Point 2\"],"
                 + "\"weak_points\": [\"Point 1\", \"Point 2\"],"
                 + "\"improvement_suggestions\": [\"Suggestion 1\", \"Suggestion 2\"]"
                 + (mode.equalsIgnoreCase("company") ? ", \"comparison_score\": \"This resume is XX% better compared to others.\"" : "")
-                + "}. No explanation. No other text. Only valid JSON.\n\n"
-                + "Here is the resume:\n" + resumeText;
+                + "}. No other explanation or text.\n\n"
+                + "Resume:\n" + resumeText;
 
         return callOpenAI(prompt);
     }
 
     // ✅ Improve Resume for Candidate
     public String generateImprovedResume(String resumeText, String role) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        String prompt = "You are a professional AI resume editor. Improve this resume for the role '" + role + "'. Return ONLY plain text improved resume:\n\n" + resumeText;
+        String prompt = "You are a professional AI resume editor. Improve this resume for the role '" + role + "'. "
+                + "Return ONLY plain text improved resume:\n\n" + resumeText;
 
         return callOpenAI(prompt);
     }
 
     // ✅ Batch Resume Comparison for Company Mode
     public String compareResumesInBatch(List<String> resumeTexts, String role) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
         StringBuilder combinedResumes = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
             combinedResumes.append("Resume ").append(i + 1).append(":\n").append(resumeTexts.get(i)).append("\n\n");
         }
 
-        String prompt = "You are an expert hiring AI. Analyze the following resumes for the role of '" + role + "'. "
-                + "Rank them based on their suitability and return ONLY valid JSON in this format: "
+        String prompt = "You are an expert AI for hiring. Analyze and rank the following resumes for the role of '" + role + "'. "
+                + "Return ONLY valid JSON in this format: "
                 + "{"
                 + "\"best_resume_index\": number, "
                 + "\"best_resume_summary\": \"summary of best resume\", "
                 + "\"ranking\": [ "
                 + "{ \"index\": number, \"score\": number, \"summary\": \"summary of resume\" }"
                 + "]"
-                + "}. No explanation. No other text. Only valid JSON.\n\n"
-                + "Here are the resumes:\n\n" + combinedResumes;
+                + "}. No other explanation or extra text.\n\n"
+                + "Resumes:\n\n" + combinedResumes;
 
         return callOpenAI(prompt);
     }
@@ -95,9 +84,10 @@ public class OpenAIService {
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             String aiResponse = message.get("content").toString().trim();
 
-            // ✅ Debug print to check AI response
+            // ✅ Debug print to check raw AI response in Railway logs
             System.out.println("🧠 AI Raw Response: " + aiResponse);
 
+            // ✅ Clean and extract only JSON
             int jsonStart = aiResponse.indexOf('{');
             int jsonEnd = aiResponse.lastIndexOf('}');
             if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
