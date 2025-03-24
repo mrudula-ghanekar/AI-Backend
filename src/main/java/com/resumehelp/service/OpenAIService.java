@@ -10,12 +10,12 @@ import java.util.*;
 @Service
 public class OpenAIService {
 
-    @Value("${gemini.api.key}")
+    @Value("${openai.api.key}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
+    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     // ✅ Analyze Resume for Candidate/Company Mode
     public String analyzeResume(String resumeText, String role, String mode) {
@@ -28,7 +28,7 @@ public class OpenAIService {
                 + "\"improvement_suggestions\": [\"Suggestion 1\", \"Suggestion 2\"]"
                 + "}";
 
-        return callGemini(prompt);
+        return callOpenAI(prompt);
     }
 
     // ✅ Improve Resume for Candidate
@@ -37,10 +37,10 @@ public class OpenAIService {
                 + "Return ONLY a structured JSON response: {\"improved_resume\": \"Updated Resume Text\"}"
                 + "\n\nResume:\n" + resumeText;
 
-        return callGemini(prompt);
+        return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison with structured ranking response
+    // ✅ Batch Resume Comparison (Now with structured ranking response)
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
 
@@ -51,41 +51,41 @@ public class OpenAIService {
         }
 
         String prompt = "You are an AI hiring expert. Analyze and rank the following resumes for the role of '" + role + "'. "
-                + "For each resume, provide a numeric score (0-100) based on fit. "
-                + "Return ONLY valid JSON: "
+                + "Return ONLY valid JSON in this format: "
                 + "{"
                 + "\"best_resume_index\": number, "
                 + "\"best_resume_summary\": \"string\", "
                 + "\"ranking\": [ "
                 + "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"score\": number, \"summary\": \"summary of resume\" }"
-                + "]" 
+                + "]"
                 + "}";
 
-        return callGemini(prompt);
+        return callOpenAI(prompt);
     }
 
-    // ✅ Common method to call Gemini API
-    private String callGemini(String prompt) {
+    // ✅ Common method to call OpenAI API
+    private String callOpenAI(String prompt) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))));
+        body.put("model", "gpt-4");
+        body.put("messages", List.of(Map.of("role", "system", "content", prompt)));
+        body.put("temperature", 0.7);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(GEMINI_API_URL + "?key=" + apiKey, HttpMethod.POST, request, Map.class);
-            List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
-            Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-            List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-            String aiResponse = parts.get(0).get("text").toString().trim();
+            ResponseEntity<Map> response = restTemplate.exchange(OPENAI_API_URL, HttpMethod.POST, request, Map.class);
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+            String aiResponse = message.get("content").toString().trim();
 
-            // ✅ Debug print to check raw AI response in Railway logs
+            // ✅ Debug print to check raw AI response in logs
             System.out.println("🧠 AI Raw Response: " + aiResponse);
 
             // ✅ Clean and extract only JSON
-            aiResponse = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
             int jsonStart = aiResponse.indexOf('{');
             int jsonEnd = aiResponse.lastIndexOf('}');
             if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
