@@ -40,7 +40,7 @@ public class OpenAIService {
         return callGemini(prompt);
     }
 
-    // ✅ Batch Resume Comparison (Now with structured ranking response)
+    // ✅ Batch Resume Comparison with structured ranking response
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
 
@@ -51,13 +51,14 @@ public class OpenAIService {
         }
 
         String prompt = "You are an AI hiring expert. Analyze and rank the following resumes for the role of '" + role + "'. "
-                + "Return ONLY valid JSON in this format: "
+                + "For each resume, provide a numeric score (0-100) based on fit. "
+                + "Return ONLY valid JSON: "
                 + "{"
                 + "\"best_resume_index\": number, "
                 + "\"best_resume_summary\": \"string\", "
                 + "\"ranking\": [ "
                 + "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"score\": number, \"summary\": \"summary of resume\" }"
-                + "]"
+                + "]" 
                 + "}";
 
         return callGemini(prompt);
@@ -84,6 +85,7 @@ public class OpenAIService {
             System.out.println("🧠 AI Raw Response: " + aiResponse);
 
             // ✅ Clean and extract only JSON
+            aiResponse = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
             int jsonStart = aiResponse.indexOf('{');
             int jsonEnd = aiResponse.lastIndexOf('}');
             if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
