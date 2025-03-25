@@ -22,7 +22,6 @@ public class OpenAIService {
                 "\n\n### Instructions:" +
                 "\n- **Mode: " + mode + "**" +
                 "\n- Extract the **full name** of the candidate from the resume." +
-                "\n- If no name is found, return `\"candidate_name\": \"Unknown\"`." +
                 "\n- Return **ONLY** a valid JSON object (**no explanations, no extra text**)." +
                 "\n- Ensure JSON **strictly follows** this format:" +
                 "\n```json\n{" +
@@ -67,7 +66,7 @@ public class OpenAIService {
 
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
-                "\n- Extract the **full name** of each candidate from the resumes." +
+                "\n- Extract the **full name** of each candidate from the resumes (located at the top or near contact details)." +
                 "\n- If no name is found, return `\"candidate_name\": \"Unknown\"`." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
