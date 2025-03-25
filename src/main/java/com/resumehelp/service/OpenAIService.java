@@ -19,14 +19,14 @@ public class OpenAIService {
     // ✅ Analyze Resume for Candidate/Company Mode
     public String analyzeResume(String resumeText, String role, String mode) {
         String prompt = "You are an AI resume analyzer. Your task is to evaluate a given resume for the role of '" + role + "'. " +
-                "\n\n### Instructions:" +
-                "\n- Extract the **full name** of the candidate from the resume." +
+                "\n\n### **Instructions:**" +
+                "\n- Extract the **full name** of the candidate from the resume (format: FirstName LastName)." +
                 "\n- If no name is found, return `\"candidate_name\": \"Unnamed Candidate\"`." +
                 "\n- Return **ONLY** a valid JSON object (**no explanations, no extra text**)." +
-                "\n- Ensure JSON **strictly follows** this format:" +
+                "\n\n### **Expected JSON Response:**" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
-                "\"candidate_name\": \"Full Name\"," +
+                "\"candidate_name\": \"Extracted Name or Unnamed Candidate\"," +
                 "\"suited_for_role\": \"Yes or No\"," +
                 "\"strong_points\": [\"Bullet Point 1\", \"Bullet Point 2\"]," +
                 (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume ranks XX% better than other applicants.\"," : "") +
@@ -41,11 +41,11 @@ public class OpenAIService {
     // ✅ Improve Resume for Candidate
     public String generateImprovedResume(String resumeText, String role) {
         String prompt = "You are an AI resume optimizer. Your job is to refine and enhance resumes for ATS and recruiter screening. " +
-                "\n\n### Instructions:" +
+                "\n\n### **Instructions:**" +
                 "\n- Improve the given resume for the role of '" + role + "'." +
                 "\n- Ensure **concise bullet points, measurable achievements, and ATS-friendly formatting**." +
                 "\n- Return **ONLY** valid JSON (**no explanations, no extra text**)." +
-                "\n\n### Expected JSON Response:" +
+                "\n\n### **Expected JSON Response:**" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
                 "\"improved_resume\": \"Updated resume text with optimizations.\"" +
@@ -63,32 +63,31 @@ public class OpenAIService {
                     .append(" (File: ").append(fileNames.get(i)).append("):\n")
                     .append(resumeTexts.get(i)).append("\n\n");
         }
-    
+
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
-                "\n\n### Instructions:" +
-                "\n- Extract the **full name** of each candidate from the resume." +
-                "\n- Ensure that **file names** are included correctly in the JSON response." +
-                "\n- If a name is not found, return `\"candidate_name\": \"Unnamed Candidate\"`." +
-                "\n- The candidate name should appear in **both the `candidate_name` field and in the summary**." +
+                "\n\n### **Instructions:**" +
+                "\n- Extract the **full name** of each candidate from the resume (format: FirstName LastName)." +
+                "\n- If the name **cannot be found**, use the **file name** as the `candidate_name`." +
+                "\n- The **candidate name must appear** in both the `candidate_name` field and in the `summary`." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
                 "\n- Ensure ranking is **sorted in descending order** based on the score." +
-                "\n\n### Expected JSON Response:" +
+                "\n\n### **Expected JSON Response:**" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
                 "\"ranking\": [" +
                 "{ \"index\": number, " +
                 "\"file_name\": \"original_file_name.pdf\", " +
-                "\"candidate_name\": \"Extracted Name\", " + // ✅ AI is now forced to include this!
+                "\"candidate_name\": \"Extracted Name or File Name\", " + 
                 "\"score\": number, " +
-                "\"summary\": \"Extracted Name (File Name) - Brief analysis of this resume\" }" + // ✅ Name also appears in summary
+                "\"summary\": \"Extracted Name or File Name - Brief analysis of this resume\" }" + 
                 "]}" +
                 "```" +
                 "\n\n**Resumes:**\n" + combinedResumes;
-    
+
         return callOpenAI(prompt);
     }
-    
+
     // ✅ Extract valid JSON from AI response using regex
     private String extractJson(String aiResponse) {
         Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
