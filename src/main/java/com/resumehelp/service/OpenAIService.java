@@ -21,12 +21,12 @@ public class OpenAIService {
         String prompt = "You are an AI resume analyzer. Your task is to evaluate a given resume for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
                 "\n- **Mode: " + mode + "**" +
-                "\n- Extract the **full name** of the candidate from the resume." +
+                "\n- Extract the **full name** of the candidate from the resume. If no name is found, try to infer it." +
                 "\n- Return **ONLY** a valid JSON object (**no explanations, no extra text**)." +
                 "\n- Ensure JSON **strictly follows** this format:" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
-                "\"candidate_name\": \"Full Name\"," +
+                "\"candidate_name\": \"Full Name or 'Unknown'\"," +
                 "\"suited_for_role\": \"Yes or No\"," +
                 "\"strong_points\": [\"Bullet Point 1\", \"Bullet Point 2\"]," +
                 (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume ranks XX% better than other applicants.\"," : "") +
