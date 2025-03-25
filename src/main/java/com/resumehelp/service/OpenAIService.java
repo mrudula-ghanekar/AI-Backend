@@ -53,7 +53,7 @@ public class OpenAIService {
 
         return callOpenAI(prompt);
     }
-
+    // ✅ Batch Compare Resumes for Company Mode
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
@@ -64,9 +64,8 @@ public class OpenAIService {
     
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
-                "\n- Extract the **full name** of each candidate from the resume text." +
-                "\n- If a name is **not found**, return `null`, do NOT guess a name." +
-                "\n- Include the **file name** for each resume." +
+                "\n- Extract the **full name** of each candidate from the resumes." +
+                "\n- Ensure that **file names** are included in the response." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
                 "\n- Ensure ranking is **sorted in descending order** based on the score." +
@@ -74,7 +73,7 @@ public class OpenAIService {
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
                 "\"ranking\": [" +
-                "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"candidate_name\": \"Extracted Name or null\", \"score\": number, \"summary\": \"Candidate Name (File Name) - Brief analysis of this resume\" }" +
+                "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"candidate_name\": \"Extracted Name\", \"score\": number, \"summary\": \"Extracted Name (File Name) - Brief analysis of this resume\" }" +
                 "]}" +
                 "```" +
                 "\n\n**Resumes:**\n" + combinedResumes;
@@ -82,7 +81,6 @@ public class OpenAIService {
         return callOpenAI(prompt);
     }
     
-
     // ✅ Extract valid JSON from AI response using regex
     private String extractJson(String aiResponse) {
         Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
