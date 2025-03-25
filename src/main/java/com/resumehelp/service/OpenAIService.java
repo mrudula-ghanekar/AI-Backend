@@ -54,7 +54,6 @@ public class OpenAIService {
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison - Extracts candidate names & file names
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
@@ -62,11 +61,12 @@ public class OpenAIService {
                     .append(" (File: ").append(fileNames.get(i)).append("):\n")
                     .append(resumeTexts.get(i)).append("\n\n");
         }
-
+    
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
-                "\n- Extract the **full name** of each candidate from the resumes." +
-                "\n- Include the **file name** alongside each candidate." +
+                "\n- Extract the **full name** of each candidate from the resume text." +
+                "\n- If a name is **not found**, return `null`, do NOT guess a name." +
+                "\n- Include the **file name** for each resume." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
                 "\n- Ensure ranking is **sorted in descending order** based on the score." +
@@ -74,13 +74,14 @@ public class OpenAIService {
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
                 "\"ranking\": [" +
-                "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"candidate_name\": \"Extracted Name\", \"score\": number, \"summary\": \"Candidate Name (File Name) - Brief analysis of this resume\" }" +
+                "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"candidate_name\": \"Extracted Name or null\", \"score\": number, \"summary\": \"Candidate Name (File Name) - Brief analysis of this resume\" }" +
                 "]}" +
                 "```" +
                 "\n\n**Resumes:**\n" + combinedResumes;
-
+    
         return callOpenAI(prompt);
     }
+    
 
     // ✅ Extract valid JSON from AI response using regex
     private String extractJson(String aiResponse) {
