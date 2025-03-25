@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.*;
 
 @Service
@@ -14,52 +13,57 @@ public class OpenAIService {
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
-
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     // ✅ Analyze Resume for Candidate/Company Mode
     public String analyzeResume(String resumeText, String role, String mode) {
-        String prompt = "You are an AI resume analyzer. Analyze if this resume fits the role of '" + role + "'. "
-                + "Return ONLY a valid JSON object without any extra text in this exact format: "
+        String prompt = "You are an AI resume analyzer. Your job is to analyze the resume below for the role of '" + role + "'. "
+                + "Provide only a valid JSON object as a response, strictly following this format (without any additional text): "
                 + "{"
                 + "\"suited_for_role\": \"Yes or No\"," 
-                + "\"strong_points\": [\"Point 1\", \"Point 2\"],"
-                + (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume is XX% better compared to others.\"," : "")
-                + "\"improvement_suggestions\": [\"Suggestion 1\", \"Suggestion 2\"]"
-                + "}";
-
+                + "\"strong_points\": [\"Bullet Point 1\", \"Bullet Point 2\"],"
+                + (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume ranks XX% better than other applicants.\"," : "")
+                + "\"improvement_suggestions\": [\"Bullet Point Suggestion 1\", \"Bullet Point Suggestion 2\"]"
+                + "}. "
+                + "Do not include any explanations, disclaimers, or non-JSON content."
+                + "\n\nResume:\n" + resumeText;
+        
         return callOpenAI(prompt);
     }
 
     // ✅ Improve Resume for Candidate
     public String generateImprovedResume(String resumeText, String role) {
-        String prompt = "You are a professional AI resume editor. Improve this resume for the role '" + role + "'. "
-                + "Return ONLY a structured JSON response: {\"improved_resume\": \"Updated Resume Text\"}"
+        String prompt = "You are a professional AI resume editor specializing in optimizing resumes for ATS (Applicant Tracking Systems) and recruiters. "
+                + "Improve the resume below for the role of '" + role + "'. Ensure concise bullet points, measurable achievements, and industry-relevant keywords. "
+                + "Return only a structured JSON response in this exact format: {\"improved_resume\": \"Updated Resume Text\"}. "
+                + "Do not include explanations, comments, or any other text."
                 + "\n\nResume:\n" + resumeText;
-
+        
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison (Now with structured ranking response)
+    // ✅ Batch Resume Comparison (Ensures Sorted Ranking & Clear Explanation)
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
-
         for (int i = 0; i < resumeTexts.size(); i++) {
             combinedResumes.append("Resume ").append(i + 1)
                     .append(" (File: ").append(fileNames.get(i)).append("):\n")
                     .append(resumeTexts.get(i)).append("\n\n");
         }
-
+        
         String prompt = "You are an AI hiring expert. Analyze and rank the following resumes for the role of '" + role + "'. "
-                + "Return ONLY valid JSON in this format: "
+                + "Consider work experience, skills, and role suitability. "
+                + "Return only a JSON response in this exact format (without extra text): "
                 + "{"
                 + "\"best_resume_index\": number, "
-                + "\"best_resume_summary\": \"string\", "
+                + "\"best_resume_summary\": \"Brief summary of why this resume is the best.\", "
                 + "\"ranking\": [ "
-                + "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"score\": number, \"summary\": \"summary of resume\" }"
+                + "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"score\": number (out of 100), \"summary\": \"Brief summary of this resume\" }"
                 + "]"
-                + "}";
-
+                + "}. "
+                + "Ensure the ranking is sorted in descending order based on score."
+                + "\n\nResumes:\n" + combinedResumes;
+        
         return callOpenAI(prompt);
     }
 
@@ -71,7 +75,7 @@ public class OpenAIService {
 
         Map<String, Object> body = new HashMap<>();
         body.put("model", "gpt-4");
-        body.put("messages", List.of(Map.of("role", "system", "content", prompt)));
+        body.put("messages", List.of(Map.of("role", "user", "content", prompt)));
         body.put("temperature", 0.7);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
@@ -85,7 +89,7 @@ public class OpenAIService {
             // ✅ Debug print to check raw AI response in logs
             System.out.println("🧠 AI Raw Response: " + aiResponse);
 
-            // ✅ Clean and extract only JSON
+            // ✅ Extract valid JSON from AI response
             int jsonStart = aiResponse.indexOf('{');
             int jsonEnd = aiResponse.lastIndexOf('}');
             if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
