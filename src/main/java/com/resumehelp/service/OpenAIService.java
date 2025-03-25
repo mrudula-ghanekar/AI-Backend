@@ -21,12 +21,13 @@ public class OpenAIService {
         String prompt = "You are an AI resume analyzer. Your task is to evaluate a given resume for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
                 "\n- **Mode: " + mode + "**" +
-                "\n- Extract the **full name** of the candidate from the resume. If no name is found, try to infer it." +
+                "\n- Extract the **full name** of the candidate from the resume." +
+                "\n- If no name is found, return `\"candidate_name\": \"Unknown\"`." +
                 "\n- Return **ONLY** a valid JSON object (**no explanations, no extra text**)." +
                 "\n- Ensure JSON **strictly follows** this format:" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
-                "\"candidate_name\": \"Full Name or 'Unknown'\"," +
+                "\"candidate_name\": \"Full Name or Unknown\"," +
                 "\"suited_for_role\": \"Yes or No\"," +
                 "\"strong_points\": [\"Bullet Point 1\", \"Bullet Point 2\"]," +
                 (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume ranks XX% better than other applicants.\"," : "") +
@@ -67,6 +68,7 @@ public class OpenAIService {
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
                 "\n- Extract the **full name** of each candidate from the resumes." +
+                "\n- If no name is found, return `\"candidate_name\": \"Unknown\"`." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
                 "\n- Ensure ranking is **sorted in descending order** based on the score." +
@@ -76,7 +78,7 @@ public class OpenAIService {
                 "\"best_resume_index\": number," +
                 "\"best_resume_summary\": \"Brief reason why this resume is the best.\"," +
                 "\"ranking\": [" +
-                "{ \"index\": number, \"candidate_name\": \"Full Name\", \"file_name\": \"original_file_name.pdf\", \"score\": number, \"summary\": \"Brief analysis of this resume\" }" +
+                "{ \"index\": number, \"candidate_name\": \"Full Name or Unknown\", \"file_name\": \"original_file_name.pdf\", \"score\": number, \"summary\": \"Brief analysis of this resume\" }" +
                 "]}" +
                 "```" +
                 "\n\n**Resumes:**\n" + combinedResumes;
