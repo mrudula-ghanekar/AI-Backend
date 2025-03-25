@@ -20,13 +20,12 @@ public class OpenAIService {
     public String analyzeResume(String resumeText, String role, String mode) {
         String prompt = "You are an AI resume analyzer. Your task is to evaluate a given resume for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
-                "\n- **Mode: " + mode + "**" +
-                "\n- Extract the **file name** of the uploaded resume." +
+                "\n- Extract the **full name** of the candidate from the resume." +
                 "\n- Return **ONLY** a valid JSON object (**no explanations, no extra text**)." +
                 "\n- Ensure JSON **strictly follows** this format:" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
-                "\"file_name\": \"resume.pdf\"," +
+                "\"candidate_name\": \"Full Name\"," +
                 "\"suited_for_role\": \"Yes or No\"," +
                 "\"strong_points\": [\"Bullet Point 1\", \"Bullet Point 2\"]," +
                 (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume ranks XX% better than other applicants.\"," : "") +
@@ -55,7 +54,7 @@ public class OpenAIService {
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison - Extracts file names & ranks properly
+    // ✅ Batch Resume Comparison - Extracts candidate names & ranks properly
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
@@ -66,17 +65,16 @@ public class OpenAIService {
 
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
-                "\n- Extract the **file name** for each resume." +
+                "\n- Extract the **full name** of each candidate from the resumes." +
+                "\n- Include the **file name** alongside each candidate." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
                 "\n- Ensure ranking is **sorted in descending order** based on the score." +
                 "\n\n### Expected JSON Response:" +
                 "\n```json\n{" +
                 "\"status\": \"success\"," +
-                "\"best_resume_index\": number," +
-                "\"best_resume_summary\": \"Brief reason why this resume is the best.\"," +
                 "\"ranking\": [" +
-                "{ \"index\": number, \"file_name\": \"resume.pdf\", \"score\": number, \"summary\": \"Brief analysis of this resume\" }" +
+                "{ \"index\": number, \"file_name\": \"original_file_name.pdf\", \"candidate_name\": \"Extracted Name\", \"score\": number, \"summary\": \"Candidate Name (File Name) - Brief analysis of this resume\" }" +
                 "]}" +
                 "```" +
                 "\n\n**Resumes:**\n" + combinedResumes;
