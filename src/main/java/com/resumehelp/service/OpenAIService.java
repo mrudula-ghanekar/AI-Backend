@@ -54,7 +54,7 @@ public class OpenAIService {
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison - Extracts candidate names & ranks properly
+    // ✅ Batch Resume Comparison - Extracts candidate names & file names
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
