@@ -21,6 +21,7 @@ public class OpenAIService {
         String prompt = "You are an AI resume analyzer. Your task is to evaluate a given resume for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
                 "\n- Extract the **full name** of the candidate from the resume." +
+                "\n- If no name is found, return `\"candidate_name\": \"Unnamed Candidate\"`." +
                 "\n- Return **ONLY** a valid JSON object (**no explanations, no extra text**)." +
                 "\n- Ensure JSON **strictly follows** this format:" +
                 "\n```json\n{" +
@@ -53,6 +54,7 @@ public class OpenAIService {
 
         return callOpenAI(prompt);
     }
+
     // ✅ Batch Compare Resumes for Company Mode
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
         StringBuilder combinedResumes = new StringBuilder();
@@ -61,11 +63,12 @@ public class OpenAIService {
                     .append(" (File: ").append(fileNames.get(i)).append("):\n")
                     .append(resumeTexts.get(i)).append("\n\n");
         }
-    
+
         String prompt = "You are an AI hiring expert analyzing multiple resumes for the role of '" + role + "'. " +
                 "\n\n### Instructions:" +
-                "\n- Extract the **full name** of each candidate from the resumes." +
-                "\n- Ensure that **file names** are included in the response." +
+                "\n- Extract the **full name** of each candidate from the resume." +
+                "\n- Ensure that **file names** are included correctly in the JSON response." +
+                "\n- If a name is not found, return `\"candidate_name\": \"Unnamed Candidate\"`." +
                 "\n- Compare and rank the resumes based on **experience, skills, and role fit**." +
                 "\n- Return **ONLY JSON** (**no explanations, no extra text**)." +
                 "\n- Ensure ranking is **sorted in descending order** based on the score." +
@@ -77,10 +80,10 @@ public class OpenAIService {
                 "]}" +
                 "```" +
                 "\n\n**Resumes:**\n" + combinedResumes;
-    
+
         return callOpenAI(prompt);
     }
-    
+
     // ✅ Extract valid JSON from AI response using regex
     private String extractJson(String aiResponse) {
         Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
