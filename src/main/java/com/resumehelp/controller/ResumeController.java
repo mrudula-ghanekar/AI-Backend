@@ -3,18 +3,21 @@ package com.resumehelp.controller;
 import com.resumehelp.service.OpenAIService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets; // ✅ FIXED: Import StandardCharsets
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "https://your-frontend-url.com")  // Replace with your actual frontend URL
 public class ResumeController {
 
     @Autowired
@@ -36,13 +39,13 @@ public class ResumeController {
             }
 
             if (file != null) {
-                resumeTexts.add(new String(file.getBytes(), StandardCharsets.UTF_8));
+                resumeTexts.add(extractTextFromFile(file));
                 fileNames.add(file.getOriginalFilename());
             }
 
             if (files != null) {
                 for (MultipartFile multiFile : files) {
-                    resumeTexts.add(new String(multiFile.getBytes(), StandardCharsets.UTF_8));
+                    resumeTexts.add(extractTextFromFile(multiFile));
                     fileNames.add(multiFile.getOriginalFilename());
                 }
             }
@@ -56,5 +59,29 @@ public class ResumeController {
         } catch (IOException e) {
             return ResponseEntity.status(500).body("{\"error\": \"❌ Failed to process resume(s).\"}");
         }
+    }
+
+    private String extractTextFromFile(MultipartFile file) throws IOException {
+        String fileName = file.getOriginalFilename().toLowerCase();
+        InputStream inputStream = file.getInputStream();
+        String fileText = "";
+
+        if (fileName.endsWith(".pdf")) {
+            PDDocument document = PDDocument.load(inputStream);
+            PDFTextStripper stripper = new PDFTextStripper();
+            fileText = stripper.getText(document);
+            document.close();
+        } else if (fileName.endsWith(".docx")) {
+            XWPFDocument docx = new XWPFDocument(inputStream);
+            fileText = docx.getParagraphs().stream()
+                    .map(p -> p.getText())
+                    .reduce((p1, p2) -> p1 + "\n" + p2)
+                    .orElse("");
+            docx.close();
+        } else {
+            throw new IOException("Unsupported file type.");
+        }
+
+        return new String(fileText.getBytes(), StandardCharsets.UTF_8);
     }
 }
