@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.*;
 import java.util.regex.*;
 
@@ -102,22 +103,25 @@ public class OpenAIService {
         headers.set("Authorization", "Bearer " + apiKey);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("model", "gpt-4");
+        body.put("model", "gpt-4");  // Consider making the model version dynamic
         body.put("messages", List.of(Map.of("role", "user", "content", prompt)));
         body.put("temperature", 0.7);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
+            // Call OpenAI API and capture the response
             ResponseEntity<Map> response = restTemplate.exchange(OPENAI_API_URL, HttpMethod.POST, request, Map.class);
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             String aiResponse = message.get("content").toString().trim();
 
+            // Log the raw AI response for debugging
             System.out.println("🧠 AI Raw Response: " + aiResponse);
 
-            return extractJson(aiResponse); // ✅ Extract JSON safely
+            return extractJson(aiResponse);  // Safely extract JSON from AI response
         } catch (Exception e) {
+            // Log the exception and return a user-friendly error message
             e.printStackTrace();
             return "{\"error\":\"API Error: " + e.getMessage().replace("\"", "'") + "\"}";
         }

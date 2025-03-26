@@ -54,7 +54,7 @@ public class ResumeController {
             }
 
             // Call the OpenAI service for either single resume or batch comparison
-            String analysis = mode.equalsIgnoreCase("company") ?
+            String analysis = mode.equalsIgnoreCase("company") ? 
                     openAIService.compareResumesInBatch(resumeTexts, fileNames, role) :
                     openAIService.analyzeResume(resumeTexts.get(0), role, mode);
 
