@@ -30,6 +30,7 @@ public class OpenAIService {
                 "\"candidate_name\": \"Extracted Name or Unnamed Candidate\"," +
                 "\"suited_for_role\": \"Yes or No\"," +
                 "\"strong_points\": [\"Bullet Point 1\", \"Bullet Point 2\"]," +
+                // If mode is "company", add the comparison score
                 (mode.equalsIgnoreCase("company") ? "\"comparison_score\": \"This resume ranks XX% better than other applicants.\"," : "") +
                 "\"improvement_suggestions\": [\"Bullet Point Suggestion 1\", \"Bullet Point Suggestion 2\"]" +
                 "}" +
@@ -103,7 +104,7 @@ public class OpenAIService {
         headers.set("Authorization", "Bearer " + apiKey);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("model", "gpt-4");  // Consider making the model version dynamic
+        body.put("model", "gpt-4");  // Using GPT-4 model
         body.put("messages", List.of(Map.of("role", "user", "content", prompt)));
         body.put("temperature", 0.7);
 
