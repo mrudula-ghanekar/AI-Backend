@@ -36,6 +36,13 @@
             <version>2.0.27</version> <!-- Stable version -->
         </dependency>
 
+        <!-- ✅ Apache POI for DOCX parsing -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version> <!-- Ensure this is the correct version -->
+        </dependency>
+
         <!-- ✅ Spring Boot Starter Test (Optional for writing tests) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
