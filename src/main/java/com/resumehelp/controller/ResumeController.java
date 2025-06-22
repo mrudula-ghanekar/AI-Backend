@@ -35,18 +35,15 @@ public class ResumeController {
             List<String> resumeTexts = new ArrayList<>();
             List<String> fileNames = new ArrayList<>();
 
-            // Validate resume upload
             if (file == null && (files == null || files.isEmpty())) {
                 return ResponseEntity.badRequest().body("{\"error\": \"No resumes uploaded. Please select resume file(s).\"}");
             }
 
-            // Handle single resume (candidate mode)
             if (file != null) {
                 resumeTexts.add(extractTextFromFile(file));
                 fileNames.add(file.getOriginalFilename());
             }
 
-            // Handle batch resumes (company mode)
             if (files != null && !files.isEmpty()) {
                 for (MultipartFile multiFile : files) {
                     resumeTexts.add(extractTextFromFile(multiFile));
@@ -55,7 +52,6 @@ public class ResumeController {
             }
 
             if (mode.equalsIgnoreCase("company")) {
-                // JD file required in company mode
                 if (jdFile == null || jdFile.isEmpty()) {
                     return ResponseEntity.badRequest().body("{\"error\": \"No Job Description file uploaded in company mode.\"}");
                 }
@@ -65,7 +61,6 @@ public class ResumeController {
                 return ResponseEntity.ok(analysis);
 
             } else {
-                // Candidate mode
                 String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, mode);
                 return ResponseEntity.ok(analysis);
             }
@@ -75,7 +70,6 @@ public class ResumeController {
         }
     }
 
-    // Extract text from PDF or DOCX
     private String extractTextFromFile(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename().toLowerCase();
         InputStream inputStream = file.getInputStream();
