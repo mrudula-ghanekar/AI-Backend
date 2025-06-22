@@ -27,6 +27,7 @@ public class ResumeController {
     public ResponseEntity<String> analyzeResume(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "jd_file", required = false) MultipartFile jdFile,
             @RequestParam("role") String role,
             @RequestParam("mode") String mode) {
 
@@ -34,66 +35,68 @@ public class ResumeController {
             List<String> resumeTexts = new ArrayList<>();
             List<String> fileNames = new ArrayList<>();
 
-            // Check if no file is uploaded
+            // Validate resume upload
             if (file == null && (files == null || files.isEmpty())) {
-                return ResponseEntity.badRequest().body("{\"error\": \"No files uploaded. Please select a resume.\"}");
+                return ResponseEntity.badRequest().body("{\"error\": \"No resumes uploaded. Please select resume file(s).\"}");
             }
 
-            // Extract text from the uploaded single file
+            // Handle single resume (candidate mode)
             if (file != null) {
                 resumeTexts.add(extractTextFromFile(file));
                 fileNames.add(file.getOriginalFilename());
             }
 
-            // Extract text from the uploaded multiple files
-            if (files != null) {
+            // Handle batch resumes (company mode)
+            if (files != null && !files.isEmpty()) {
                 for (MultipartFile multiFile : files) {
                     resumeTexts.add(extractTextFromFile(multiFile));
                     fileNames.add(multiFile.getOriginalFilename());
                 }
             }
 
-            // Call the OpenAI service for either single resume or batch comparison
-            String analysis = mode.equalsIgnoreCase("company") ? 
-                    openAIService.compareResumesInBatch(resumeTexts, fileNames, role) :
-                    openAIService.analyzeResume(resumeTexts.get(0), role, mode);
+            if (mode.equalsIgnoreCase("company")) {
+                // JD file required in company mode
+                if (jdFile == null || jdFile.isEmpty()) {
+                    return ResponseEntity.badRequest().body("{\"error\": \"No Job Description file uploaded in company mode.\"}");
+                }
 
-            return ResponseEntity.ok(analysis);
+                String jdText = extractTextFromFile(jdFile);
+                String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, role, jdText);
+                return ResponseEntity.ok(analysis);
+
+            } else {
+                // Candidate mode
+                String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, mode);
+                return ResponseEntity.ok(analysis);
+            }
 
         } catch (IOException e) {
-            // Return an error response if file parsing fails
-            return ResponseEntity.status(500).body("{\"error\": \"❌ Failed to process resume(s). Please check the file format and try again.\"}");
+            return ResponseEntity.status(500).body("{\"error\": \"❌ Failed to process file(s). Please check file format and try again.\"}");
         }
     }
 
-    // Method to extract text from PDF or DOCX files
+    // Extract text from PDF or DOCX
     private String extractTextFromFile(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename().toLowerCase();
         InputStream inputStream = file.getInputStream();
-        String fileText = "";
+        String fileText;
 
-        // Handling PDF files
         if (fileName.endsWith(".pdf")) {
-            PDDocument document = PDDocument.load(inputStream);
-            PDFTextStripper stripper = new PDFTextStripper();
-            fileText = stripper.getText(document);
-            document.close();
-        } 
-        // Handling DOCX files
-        else if (fileName.endsWith(".docx")) {
-            XWPFDocument docx = new XWPFDocument(inputStream);
-            fileText = docx.getParagraphs().stream()
-                    .map(p -> p.getText())
-                    .reduce((p1, p2) -> p1 + "\n" + p2)
-                    .orElse("");
-            docx.close();
-        } 
-        // Unsupported file type
-        else {
-            throw new IOException("Unsupported file type. Please upload a PDF or DOCX file.");
+            try (PDDocument document = PDDocument.load(inputStream)) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                fileText = stripper.getText(document);
+            }
+        } else if (fileName.endsWith(".docx")) {
+            try (XWPFDocument docx = new XWPFDocument(inputStream)) {
+                fileText = docx.getParagraphs().stream()
+                        .map(p -> p.getText())
+                        .reduce((p1, p2) -> p1 + "\n" + p2)
+                        .orElse("");
+            }
+        } else {
+            throw new IOException("Unsupported file type. Please upload PDF or DOCX.");
         }
 
-        // Return the extracted text as UTF-8 encoded string
         return new String(fileText.getBytes(), StandardCharsets.UTF_8);
     }
 }
