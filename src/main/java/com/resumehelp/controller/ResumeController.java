@@ -1,3 +1,4 @@
+// ResumeController.java
 package com.resumehelp.controller;
 
 import com.resumehelp.service.OpenAIService;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "https://ai-resume-frontend-mg.vercel.app")  // Replace with your actual frontend URL
+@CrossOrigin(origins = "https://ai-resume-frontend-mg.vercel.app")
 public class ResumeController {
 
     @Autowired
@@ -41,13 +42,13 @@ public class ResumeController {
 
             if (file != null) {
                 resumeTexts.add(extractTextFromFile(file));
-                fileNames.add(file.getOriginalFilename());
+                fileNames.add(cleanFileName(file.getOriginalFilename()));
             }
 
             if (files != null && !files.isEmpty()) {
                 for (MultipartFile multiFile : files) {
                     resumeTexts.add(extractTextFromFile(multiFile));
-                    fileNames.add(multiFile.getOriginalFilename());
+                    fileNames.add(cleanFileName(multiFile.getOriginalFilename()));
                 }
             }
 
@@ -57,16 +58,15 @@ public class ResumeController {
                 }
 
                 String jdText = extractTextFromFile(jdFile);
-                String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, role, jdText);
+                String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jdText, "unknown@example.com");
                 return ResponseEntity.ok(analysis);
-
             } else {
                 String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, mode);
                 return ResponseEntity.ok(analysis);
             }
 
         } catch (IOException e) {
-            return ResponseEntity.status(500).body("{\"error\": \"❌ Failed to process file(s). Please check file format and try again.\"}");
+            return ResponseEntity.status(500).body("{\"error\": \"\u274C Failed to process file(s). Please check file format and try again.\"}");
         }
     }
 
@@ -92,5 +92,9 @@ public class ResumeController {
         }
 
         return new String(fileText.getBytes(), StandardCharsets.UTF_8);
+    }
+
+    private String cleanFileName(String fileName) {
+        return fileName.replaceAll("[^a-zA-Z0-9.\\-_\s]", "").trim();
     }
 }
