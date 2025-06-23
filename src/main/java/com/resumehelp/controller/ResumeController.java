@@ -1,5 +1,6 @@
 package com.resumehelp.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resumehelp.service.OpenAIService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -23,6 +24,8 @@ public class ResumeController {
     @Autowired
     private OpenAIService openAIService;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeResume(
             @RequestParam(value = "file", required = false) MultipartFile file,
@@ -36,7 +39,7 @@ public class ResumeController {
             List<String> resumeTexts = new ArrayList<>();
             List<String> fileNames = new ArrayList<>();
 
-            // Resolve file sources
+            // Get text from files
             if (file != null) {
                 resumeTexts.add(extractTextFromFile(file));
                 fileNames.add(cleanFileName(file.getOriginalFilename()));
@@ -49,7 +52,6 @@ public class ResumeController {
                 return ResponseEntity.badRequest().body(new ErrorResponse("❌ Resume file(s) are required."));
             }
 
-            // Company mode logic
             if ("company".equals(normalizedMode)) {
                 if (jdFile == null || jdFile.isEmpty()) {
                     return ResponseEntity.badRequest().body(new ErrorResponse("❌ Job description file (jd_file) is required in company mode."));
@@ -57,17 +59,26 @@ public class ResumeController {
 
                 String jdText = extractTextFromFile(jdFile);
                 String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jdText, "provided@user.com");
-                return ResponseEntity.ok(analysis);
+
+                // Return as raw JSON string (assumes it's already valid JSON)
+                Object parsed = objectMapper.readValue(analysis, Object.class);
+                return ResponseEntity.ok(parsed);
 
             } else if ("candidate".equals(normalizedMode)) {
                 String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, normalizedMode);
-                return ResponseEntity.ok(analysis);
+
+                // Parse JSON string from OpenAI into a proper Java object
+                Object parsed = objectMapper.readValue(analysis, Object.class);
+                return ResponseEntity.ok(parsed);
+
             } else {
                 return ResponseEntity.badRequest().body(new ErrorResponse("❌ Invalid mode. Use 'candidate' or 'company'."));
             }
 
         } catch (IOException e) {
             return ResponseEntity.status(500).body(new ErrorResponse("❌ Failed to process file(s). Please check file format and try again."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new ErrorResponse("❌ Unexpected error: " + e.getMessage()));
         }
     }
 
@@ -99,7 +110,6 @@ public class ResumeController {
         return fileName.replaceAll("[^a-zA-Z0-9.\\-_\\s]", "").trim();
     }
 
-    // Simple error response class
     public static class ErrorResponse {
         private final String error;
         public ErrorResponse(String error) {
