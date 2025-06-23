@@ -41,7 +41,7 @@ public class OpenAIService {
                   .append("- Give suggestions to improve fit for the role.\n");
         }
 
-        prompt.append("- Output only a valid JSON object.\n\n");
+        prompt.append("- Output only a valid JSON object, no explanations.\n\n");
 
         prompt.append("### JSON Format:\n{\n")
               .append("  \"status\": \"success\",\n")
@@ -74,7 +74,7 @@ public class OpenAIService {
                 "- Format clearly and include measurable results.\n" +
                 "- Improve readability and optimize for ATS.\n" +
                 "- Use role-specific keywords and strong bullet points.\n" +
-                "- Output in JSON format.\n\n" +
+                "- Output only valid JSON.\n\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"improved_resume\": \"Full optimized resume content\"\n" +
@@ -173,8 +173,22 @@ public class OpenAIService {
     }
 
     private String extractJson(String aiResponse) {
-        Pattern pattern = Pattern.compile("\\{.*?}|\\[.*?]", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(aiResponse);
-        return matcher.find() ? matcher.group() : "{\"error\":\"Invalid AI Response\"}";
+        aiResponse = aiResponse.trim();
+
+        int startIdx = aiResponse.indexOf('{');
+        int endIdx = aiResponse.lastIndexOf('}');
+
+        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+            return aiResponse.substring(startIdx, endIdx + 1);
+        }
+
+        startIdx = aiResponse.indexOf('[');
+        endIdx = aiResponse.lastIndexOf(']');
+
+        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+            return aiResponse.substring(startIdx, endIdx + 1);
+        }
+
+        return "{\"error\":\"Invalid AI JSON structure\"}";
     }
 }
