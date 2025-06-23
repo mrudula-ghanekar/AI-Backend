@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
-import java.util.regex.*;
 
 @Service
 public class OpenAIService {
@@ -41,7 +40,7 @@ public class OpenAIService {
                   .append("- Give suggestions to improve fit for the role.\n");
         }
 
-        prompt.append("- Output only a valid JSON object, no explanations.\n\n");
+        prompt.append("- Output only a valid JSON object. No explanation. No markdown.\n\n");
 
         prompt.append("### JSON Format:\n{\n")
               .append("  \"status\": \"success\",\n")
@@ -74,7 +73,7 @@ public class OpenAIService {
                 "- Format clearly and include measurable results.\n" +
                 "- Improve readability and optimize for ATS.\n" +
                 "- Use role-specific keywords and strong bullet points.\n" +
-                "- Output only valid JSON.\n\n" +
+                "- Output only valid JSON. No explanation.\n\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"improved_resume\": \"Full optimized resume content\"\n" +
@@ -97,7 +96,7 @@ public class OpenAIService {
                 "- Extract name or fallback to file name.\n" +
                 "- Score (0–100) based on relevance and experience.\n" +
                 "- Sort in descending order of score.\n" +
-                "- Output only JSON.\n\n" +
+                "- Output only JSON. No explanation.\n\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"ranking\": [\n" +
@@ -128,7 +127,8 @@ public class OpenAIService {
                 "- Score each resume (0–100) based on relevance.\n" +
                 "- Extract full name or fallback to file name.\n" +
                 "- Justify score with a one-line summary.\n" +
-                "- Return a JSON array sorted by score descending.\n\n" +
+                "- Return only a JSON array sorted by score descending.\n" +
+                "- Output strictly valid JSON array. No markdown. No explanation.\n\n" +
                 "[\n" +
                 "  {\n" +
                 "    \"file_name\": \"resume1.pdf\",\n" +
@@ -175,18 +175,17 @@ public class OpenAIService {
     private String extractJson(String aiResponse) {
         aiResponse = aiResponse.trim();
 
-        int startIdx = aiResponse.indexOf('{');
-        int endIdx = aiResponse.lastIndexOf('}');
-
-        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
-            return aiResponse.substring(startIdx, endIdx + 1);
+        // Prefer JSON array first
+        int arrayStart = aiResponse.indexOf('[');
+        int arrayEnd = aiResponse.lastIndexOf(']');
+        if (arrayStart != -1 && arrayEnd != -1 && arrayEnd > arrayStart) {
+            return aiResponse.substring(arrayStart, arrayEnd + 1);
         }
 
-        startIdx = aiResponse.indexOf('[');
-        endIdx = aiResponse.lastIndexOf(']');
-
-        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
-            return aiResponse.substring(startIdx, endIdx + 1);
+        int objStart = aiResponse.indexOf('{');
+        int objEnd = aiResponse.lastIndexOf('}');
+        if (objStart != -1 && objEnd != -1 && objEnd > objStart) {
+            return aiResponse.substring(objStart, objEnd + 1);
         }
 
         return "{\"error\":\"Invalid AI JSON structure\"}";
