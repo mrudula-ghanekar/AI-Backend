@@ -164,7 +164,7 @@ public class OpenAIService {
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             String aiResponse = String.valueOf(message.get("content")).trim();
 
-            System.out.println("🧠 AI Response: " + aiResponse);
+            System.out.println("🧠 Raw AI Response:\n" + aiResponse);
             return extractJson(aiResponse);
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,19 +175,23 @@ public class OpenAIService {
     private String extractJson(String aiResponse) {
         aiResponse = aiResponse.trim();
 
-        // Prefer JSON array first
         int arrayStart = aiResponse.indexOf('[');
         int arrayEnd = aiResponse.lastIndexOf(']');
         if (arrayStart != -1 && arrayEnd != -1 && arrayEnd > arrayStart) {
-            return aiResponse.substring(arrayStart, arrayEnd + 1);
+            String json = aiResponse.substring(arrayStart, arrayEnd + 1);
+            System.out.println("📥 Extracted JSON Array:\n" + json);
+            return json;
         }
 
         int objStart = aiResponse.indexOf('{');
         int objEnd = aiResponse.lastIndexOf('}');
         if (objStart != -1 && objEnd != -1 && objEnd > objStart) {
-            return aiResponse.substring(objStart, objEnd + 1);
+            String json = aiResponse.substring(objStart, objEnd + 1);
+            System.out.println("📥 Extracted JSON Object:\n" + json);
+            return json;
         }
 
+        System.out.println("❌ Couldn't extract JSON. Raw response:\n" + aiResponse);
         return "{\"error\":\"Invalid AI JSON structure\"}";
     }
 }
