@@ -17,32 +17,32 @@ public class OpenAIService {
     private final RestTemplate restTemplate = new RestTemplate();
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-    // ✅ Analyze Resume: Candidate & Company Mode
     public String analyzeResume(String resumeText, String role, String mode) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are an intelligent AI career advisor and resume evaluator.\n");
-        prompt.append("Your job is to analyze the candidate's resume in context of the applied role: '").append(role).append("'.\n");
+        prompt.append("Analyze the following resume in the context of the role: '").append(role).append("'.\n");
 
         prompt.append("\n### Instructions:\n");
-        prompt.append("- Extract the full name of the candidate (format: FirstName LastName). If missing, use \"Unnamed Candidate\".\n");
-        prompt.append("- Assess if the resume is suited for the specified role.\n");
-        prompt.append("- Identify strengths (aligned skills, experience, certifications).\n");
-        prompt.append("- Identify weaknesses or gaps (missing or unrelated skills).\n");
+        prompt.append("- Extract full name (FirstName LastName), or return \"Unnamed Candidate\" if not found.\n");
+        prompt.append("- Determine if the resume fits the role.\n");
+        prompt.append("- Highlight strong points: matching skills, relevant experience, certifications.\n");
+        prompt.append("- Highlight weak points: irrelevant experience, missing key skills.\n");
 
         if (mode.equalsIgnoreCase("candidate")) {
-            prompt.append("- Suggest personalized improvements such as:\n");
-            prompt.append("  - Online courses to take\n");
-            prompt.append("  - YouTube channels to follow\n");
-            prompt.append("  - Career guides or roadmaps to refer\n");
-            prompt.append("  - Alternate roles matching existing skills\n");
-            prompt.append("  - Specific skills/tools/languages to learn\n");
+            prompt.append("- Offer career suggestions based on the resume content, such as:\n");
+            prompt.append("  - Online courses\n");
+            prompt.append("  - YouTube channels\n");
+            prompt.append("  - Career guides or roadmaps\n");
+            prompt.append("  - Roles that match current skills (e.g., 'You have skills X and Y, consider applying for Z instead of ").append(role).append("')\n");
+            prompt.append("  - Specific tools or languages to learn\n");
         } else {
-            prompt.append("- Include a comparative score if applicable to company evaluation.\n");
+            prompt.append("- Include a comparison score to evaluate this candidate against others.\n");
+            prompt.append("- Give improvement suggestions to better fit the role.\n");
         }
 
-        prompt.append("- Return only a valid JSON object. No explanations or extra text.\n\n");
+        prompt.append("- Output only a valid JSON object.\n\n");
 
-        prompt.append("### Expected JSON Format:\n");
+        prompt.append("### JSON Format:\n");
         prompt.append("{\n");
         prompt.append("  \"status\": \"success\",\n");
         prompt.append("  \"candidate_name\": \"Extracted Name or Unnamed Candidate\",\n");
@@ -55,7 +55,7 @@ public class OpenAIService {
             prompt.append("    \"online_courses\": [\"course1\", \"course2\"],\n");
             prompt.append("    \"youtube_channels\": [\"channel1\", \"channel2\"],\n");
             prompt.append("    \"career_guides\": [\"guide1\", \"guide2\"],\n");
-            prompt.append("    \"alternative_roles\": [\"role1\", \"role2\"],\n");
+            prompt.append("    \"alternative_roles\": [\"role suggestions\"],\n");
             prompt.append("    \"skills_to_learn\": [\"skill1\", \"skill2\"]\n");
             prompt.append("  }\n");
         } else {
@@ -64,21 +64,17 @@ public class OpenAIService {
         }
 
         prompt.append("}\n\n");
-
         prompt.append("### Resume Content:\n").append(resumeText);
 
         return callOpenAI(prompt.toString());
     }
 
-    // ✅ Resume Optimizer for Candidates
     public String generateImprovedResume(String resumeText, String role) {
-        String prompt = "You are an AI resume optimizer. Your job is to enhance resumes to make them more effective for ATS and recruiter screening.\n\n" +
+        String prompt = "You are an AI resume optimizer. Enhance this resume for the role: '" + role + "'.\n\n" +
                 "### Instructions:\n" +
-                "- Optimize the resume for the role: '" + role + "'.\n" +
-                "- Use concise bullet points, action verbs, quantifiable results.\n" +
-                "- Improve formatting for clarity and scanning.\n" +
-                "- Output only a valid JSON object, no explanation.\n\n" +
-                "### Output Format:\n" +
+                "- Use clear formatting and quantifiable results.\n" +
+                "- Optimize with strong bullet points, keywords, and readability.\n" +
+                "- Output JSON only.\n\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"improved_resume\": \"Full optimized resume content\"\n" +
@@ -88,64 +84,65 @@ public class OpenAIService {
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch Resume Comparison for Company
     public String compareResumesInBatch(List<String> resumeTexts, List<String> fileNames, String role) {
-        StringBuilder combinedResumes = new StringBuilder();
+        StringBuilder combined = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
-            combinedResumes.append("Resume ").append(i + 1)
+            combined.append("Resume ").append(i + 1)
                     .append(" (File: ").append(fileNames.get(i)).append("):\n")
                     .append(resumeTexts.get(i)).append("\n\n");
         }
 
-        String prompt = "You are an AI recruiter comparing multiple resumes for the role of '" + role + "'.\n\n" +
+        String prompt = "You are an AI recruiter evaluating resumes for the role '" + role + "'.\n\n" +
                 "### Instructions:\n" +
-                "- Extract candidate name or fallback to file name.\n" +
-                "- Rank resumes based on experience, skills, and fit for the role.\n" +
-                "- Output a JSON object sorted by descending score.\n\n" +
-                "### JSON Format:\n" +
+                "- Extract name or fallback to file name.\n" +
+                "- Score (0–100) based on skills/experience match.\n" +
+                "- Sort by highest to lowest score.\n\n" +
+                "### Output:\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"ranking\": [\n" +
                 "    {\n" +
                 "      \"index\": number,\n" +
-                "      \"file_name\": \"abc.pdf\",\n" +
-                "      \"candidate_name\": \"Extracted or fallback\",\n" +
-                "      \"score\": 87,\n" +
-                "      \"summary\": \"Short performance summary\"\n" +
+                "      \"file_name\": \"resume1.pdf\",\n" +
+                "      \"candidate_name\": \"Name or fallback\",\n" +
+                "      \"score\": 92,\n" +
+                "      \"summary\": \"Short summary\"\n" +
                 "    }\n" +
                 "  ]\n" +
                 "}\n\n" +
-                "### Resumes:\n" + combinedResumes;
+                "### Resumes:\n" + combined;
 
         return callOpenAI(prompt);
     }
 
-    // ✅ Batch with Job Description for Recruiters
     public String compareResumesInBatchWithJD(List<String> resumeTexts, List<String> fileNames, String jobDescription, String userEmail) {
-        StringBuilder combinedResumes = new StringBuilder();
+        StringBuilder combined = new StringBuilder();
         for (int i = 0; i < resumeTexts.size(); i++) {
-            combinedResumes.append("Resume ").append(i + 1)
+            combined.append("Resume ").append(i + 1)
                     .append(" (File: ").append(fileNames.get(i)).append("):\n")
                     .append(resumeTexts.get(i)).append("\n\n");
         }
 
-        String prompt = "You are an AI hiring assistant analyzing resumes against the following job description:\n\n" +
-                "### Job Description:\n" + jobDescription + "\n\n" +
+        String prompt = "You are an AI recruiter comparing resumes to this JD:\n" +
+                jobDescription + "\n\n" +
                 "### Instructions:\n" +
-                "- Score resumes (0–100) based on JD relevance.\n" +
-                "- Extract candidate name or fallback to file name.\n" +
-                "- Justify scoring in 1 sentence.\n" +
-                "- Output only JSON.\n\n" +
-                "### JSON Format:\n" +
+                "- Score each resume (0–100) based on JD match.\n" +
+                "- Extract name or fallback to file name.\n" +
+                "- Justify with a one-line summary.\n" +
+                "- Return JSON sorted ASCENDING by score (best to worst).\n\n" +
                 "[\n" +
-                "  { \"file_name\": \"file1.pdf\", \"candidate_name\": \"John Doe\", \"score\": 85, \"summary\": \"Summary sentence\" }\n" +
+                "  {\n" +
+                "    \"file_name\": \"resume.pdf\",\n" +
+                "    \"candidate_name\": \"Extracted Name\",\n" +
+                "    \"score\": 92,\n" +
+                "    \"summary\": \"Strong match in skills A and B.\"\n" +
+                "  }\n" +
                 "]\n\n" +
-                "### Resumes:\n" + combinedResumes;
+                "### Resumes:\n" + combined;
 
         return callOpenAI(prompt);
     }
 
-    // ✅ Common OpenAI API call
     private String callOpenAI(String prompt) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -165,7 +162,6 @@ public class OpenAIService {
             String aiResponse = message.get("content").toString().trim();
 
             System.out.println("🧠 AI Raw Response: " + aiResponse);
-
             return extractJson(aiResponse);
         } catch (Exception e) {
             e.printStackTrace();
@@ -173,9 +169,8 @@ public class OpenAIService {
         }
     }
 
-    // ✅ JSON Extractor
     private String extractJson(String aiResponse) {
-        Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
+        Pattern pattern = Pattern.compile("\\{.*\\}|\\[.*\\]", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(aiResponse);
         return matcher.find() ? matcher.group() : "{\"error\":\"Invalid AI Response\"}";
     }

@@ -1,4 +1,3 @@
-// ResumeController.java
 package com.resumehelp.controller;
 
 import com.resumehelp.service.OpenAIService;
@@ -66,7 +65,7 @@ public class ResumeController {
             }
 
         } catch (IOException e) {
-            return ResponseEntity.status(500).body("{\"error\": \"\u274C Failed to process file(s). Please check file format and try again.\"}");
+            return ResponseEntity.status(500).body("{\"error\": \"❌ Failed to process file(s). Please check file format and try again.\"}");
         }
     }
 
