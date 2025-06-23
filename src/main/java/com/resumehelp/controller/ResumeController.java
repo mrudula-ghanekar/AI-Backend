@@ -35,29 +35,16 @@ public class ResumeController {
             List<String> resumeTexts = new ArrayList<>();
             List<String> fileNames = new ArrayList<>();
 
-            // No files uploaded — inject dummy data
-            if ((file == null && (files == null || files.isEmpty()))) {
-                String dummyResume = """
-                        John Doe
-                        Email: john.doe@example.com
-                        Phone: (123) 456-7890
-                        Experience:
-                        - Software Engineer at XYZ Corp (2020-2023)
-                        - Intern at ABC Tech (2019)
-                        Skills: Java, Spring Boot, REST APIs, MySQL, Git
-                        Education: B.Sc. in Computer Science, Example University
-                        """;
-                resumeTexts.add(dummyResume);
-                fileNames.add("dummy_resume.txt");
+            // Require at least one resume file
+            if (file == null && (files == null || files.isEmpty())) {
+                return ResponseEntity.badRequest().body("{\"error\": \"❌ Resume file(s) are required.\"}");
             }
 
-            // Single file upload
             if (file != null) {
                 resumeTexts.add(extractTextFromFile(file));
                 fileNames.add(cleanFileName(file.getOriginalFilename()));
             }
 
-            // Multiple file upload
             if (files != null && !files.isEmpty()) {
                 for (MultipartFile multiFile : files) {
                     resumeTexts.add(extractTextFromFile(multiFile));
@@ -65,34 +52,25 @@ public class ResumeController {
                 }
             }
 
-            // Company mode — need JD
-            if (mode.equalsIgnoreCase("company")) {
-                String jdText;
-
-                if (jdFile != null && !jdFile.isEmpty()) {
-                    jdText = extractTextFromFile(jdFile);
-                } else {
-                    jdText = """
-                            Job Title: Backend Java Developer
-                            Responsibilities:
-                            - Develop REST APIs using Spring Boot
-                            - Work with relational databases like MySQL
-                            - Write clean and maintainable code
-                            Requirements:
-                            - 2+ years of experience in Java
-                            - Knowledge of Git and REST principles
-                            """;
+            // Company mode requires JD
+            if ("company".equalsIgnoreCase(mode)) {
+                if (jdFile == null || jdFile.isEmpty()) {
+                    return ResponseEntity.badRequest().body("{\"error\": \"❌ Job description file (jd_file) is required in company mode.\"}");
                 }
 
-                String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jdText, "dummy@testing.com");
+                String jdText = extractTextFromFile(jdFile);
+                String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jdText, "provided@user.com");
                 return ResponseEntity.ok(analysis);
             } else {
+                // Candidate or developer mode
                 String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, mode);
                 return ResponseEntity.ok(analysis);
             }
 
         } catch (IOException e) {
-            return ResponseEntity.status(500).body("{\"error\": \"❌ Failed to process file(s). Please check file format and try again.\"}");
+            return ResponseEntity
+                    .status(500)
+                    .body("{\"error\": \"❌ Failed to process file(s). Please check file format and try again.\"}");
         }
     }
 

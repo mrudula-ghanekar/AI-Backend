@@ -29,7 +29,7 @@ public class OpenAIService {
               .append("- Highlight strong points (skills, experience, certifications).\n")
               .append("- Highlight weak points (missing skills, unrelated experience).\n");
 
-        if (mode.equalsIgnoreCase("candidate")) {
+        if ("candidate".equalsIgnoreCase(mode)) {
             prompt.append("- Offer personalized career recommendations:\n")
                   .append("  - Online courses\n")
                   .append("  - YouTube channels\n")
@@ -50,7 +50,7 @@ public class OpenAIService {
               .append("  \"strong_points\": [\"point1\", \"point2\"],\n")
               .append("  \"weak_points\": [\"point1\", \"point2\"],\n");
 
-        if (mode.equalsIgnoreCase("candidate")) {
+        if ("candidate".equalsIgnoreCase(mode)) {
             prompt.append("  \"recommendations\": {\n")
                   .append("    \"online_courses\": [\"course1\", \"course2\"],\n")
                   .append("    \"youtube_channels\": [\"channel1\", \"channel2\"],\n")
@@ -164,7 +164,7 @@ public class OpenAIService {
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             String aiResponse = String.valueOf(message.get("content")).trim();
 
-            System.out.println("🧠 AI Raw Response: " + aiResponse);
+            System.out.println("🧠 AI Response: " + aiResponse);
             return extractJson(aiResponse);
         } catch (Exception e) {
             e.printStackTrace();
