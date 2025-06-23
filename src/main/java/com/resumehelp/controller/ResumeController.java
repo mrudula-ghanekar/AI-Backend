@@ -1,122 +1,58 @@
 package com.resumehelp.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resumehelp.service.OpenAIService;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api")
-@CrossOrigin(origins = "https://ai-resume-frontend-mg.vercel.app")
+@RequestMapping("/api/resume")
+@CrossOrigin
 public class ResumeController {
 
     @Autowired
     private OpenAIService openAIService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @PostMapping("/analyze")
-    public ResponseEntity<?> analyzeResume(
-            @RequestParam(value = "file", required = false) MultipartFile file,
-            @RequestParam(value = "files", required = false) List<MultipartFile> files,
-            @RequestParam(value = "jd_file", required = false) MultipartFile jdFile,
+    public ResponseEntity<String> analyzeResume(
+            @RequestParam("resumeText") String resumeText,
             @RequestParam("role") String role,
             @RequestParam("mode") String mode) {
 
-        try {
-            String normalizedMode = mode.trim().toLowerCase();
-            List<String> resumeTexts = new ArrayList<>();
-            List<String> fileNames = new ArrayList<>();
-
-            // Get text from files
-            if (file != null) {
-                resumeTexts.add(extractTextFromFile(file));
-                fileNames.add(cleanFileName(file.getOriginalFilename()));
-            } else if (files != null && !files.isEmpty()) {
-                for (MultipartFile multiFile : files) {
-                    resumeTexts.add(extractTextFromFile(multiFile));
-                    fileNames.add(cleanFileName(multiFile.getOriginalFilename()));
-                }
-            } else {
-                return ResponseEntity.badRequest().body(new ErrorResponse("❌ Resume file(s) are required."));
-            }
-
-            if ("company".equals(normalizedMode)) {
-                if (jdFile == null || jdFile.isEmpty()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("❌ Job description file (jd_file) is required in company mode."));
-                }
-
-                String jdText = extractTextFromFile(jdFile);
-                String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jdText, "provided@user.com");
-
-                // Return as raw JSON string (assumes it's already valid JSON)
-                Object parsed = objectMapper.readValue(analysis, Object.class);
-                return ResponseEntity.ok(parsed);
-
-            } else if ("candidate".equals(normalizedMode)) {
-                String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, normalizedMode);
-
-                // Parse JSON string from OpenAI into a proper Java object
-                Object parsed = objectMapper.readValue(analysis, Object.class);
-                return ResponseEntity.ok(parsed);
-
-            } else {
-                return ResponseEntity.badRequest().body(new ErrorResponse("❌ Invalid mode. Use 'candidate' or 'company'."));
-            }
-
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(new ErrorResponse("❌ Failed to process file(s). Please check file format and try again."));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(new ErrorResponse("❌ Unexpected error: " + e.getMessage()));
-        }
+        String result = openAIService.analyzeResume(resumeText, role, mode);
+        return ResponseEntity.ok(result);
     }
 
-    private String extractTextFromFile(MultipartFile file) throws IOException {
-        String fileName = file.getOriginalFilename().toLowerCase();
-        InputStream inputStream = file.getInputStream();
-        String fileText;
+    @PostMapping("/improve")
+    public ResponseEntity<String> improveResume(
+            @RequestParam("resumeText") String resumeText,
+            @RequestParam("role") String role) {
 
-        if (fileName.endsWith(".pdf")) {
-            try (PDDocument document = PDDocument.load(inputStream)) {
-                PDFTextStripper stripper = new PDFTextStripper();
-                fileText = stripper.getText(document);
-            }
-        } else if (fileName.endsWith(".docx")) {
-            try (XWPFDocument docx = new XWPFDocument(inputStream)) {
-                fileText = docx.getParagraphs().stream()
-                        .map(p -> p.getText())
-                        .reduce((p1, p2) -> p1 + "\n" + p2)
-                        .orElse("");
-            }
-        } else {
-            throw new IOException("Unsupported file type. Please upload PDF or DOCX.");
-        }
-
-        return new String(fileText.getBytes(), StandardCharsets.UTF_8);
+        String result = openAIService.generateImprovedResume(resumeText, role);
+        return ResponseEntity.ok(result);
     }
 
-    private String cleanFileName(String fileName) {
-        return fileName.replaceAll("[^a-zA-Z0-9.\\-_\\s]", "").trim();
+    @PostMapping("/compare-batch")
+    public ResponseEntity<String> compareBatch(
+            @RequestParam("resumes") List<String> resumeTexts,
+            @RequestParam("fileNames") List<String> fileNames,
+            @RequestParam("role") String role) {
+
+        String result = openAIService.compareResumesInBatch(resumeTexts, fileNames, role);
+        return ResponseEntity.ok(result);
     }
 
-    public static class ErrorResponse {
-        private final String error;
-        public ErrorResponse(String error) {
-            this.error = error;
-        }
-        public String getError() {
-            return error;
-        }
+    @PostMapping("/compare-with-jd")
+    public ResponseEntity<String> compareWithJD(
+            @RequestParam("resumes") List<String> resumeTexts,
+            @RequestParam("fileNames") List<String> fileNames,
+            @RequestParam("jobDescription") String jobDescription,
+            @RequestParam("email") String email) {
+
+        String result = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jobDescription, email);
+        return ResponseEntity.ok(result);
     }
 }
