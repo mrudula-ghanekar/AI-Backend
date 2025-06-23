@@ -23,7 +23,7 @@
     </properties>
 
     <dependencies>
-        <!-- ✅ Spring Boot Starter Web for REST APIs -->
+        <!-- ✅ Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -35,7 +35,7 @@
             </exclusions>
         </dependency>
 
-        <!-- ✅ PDFBox for PDF Parsing -->
+        <!-- ✅ PDFBox -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
@@ -48,7 +48,7 @@
             </exclusions>
         </dependency>
 
-        <!-- ✅ Apache POI for DOCX parsing -->
+        <!-- ✅ Apache POI for DOCX -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
@@ -61,7 +61,7 @@
             </exclusions>
         </dependency>
 
-        <!-- ✅ Apache Tika for File Content Extraction -->
+        <!-- ✅ Tika Core + Parsers -->
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
@@ -73,7 +73,14 @@
             <version>2.9.0</version>
         </dependency>
 
-        <!-- ✅ Spring Boot Starter Test -->
+        <!-- ✅ FIX: Apache XMLBeans (required for POI/XWPF parsing) -->
+        <dependency>
+            <groupId>org.apache.xmlbeans</groupId>
+            <artifactId>xmlbeans</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+
+        <!-- ✅ Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -87,7 +94,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- ✅ Jackson for JSON -->
+        <!-- ✅ Jackson -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -96,14 +103,14 @@
 
     <build>
         <plugins>
-            <!-- ✅ Spring Boot Maven Plugin -->
+            <!-- ✅ Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.2.4</version>
             </plugin>
 
-            <!-- ✅ Maven Compiler Plugin for Java 17 -->
+            <!-- ✅ Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -114,7 +121,7 @@
                 </configuration>
             </plugin>
 
-            <!-- ✅ Surefire Plugin -->
+            <!-- ✅ Surefire (tests) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
