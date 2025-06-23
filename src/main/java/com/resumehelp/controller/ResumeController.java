@@ -24,7 +24,7 @@ public class ResumeController {
     private OpenAIService openAIService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<String> analyzeResume(
+    public ResponseEntity<?> analyzeResume(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
             @RequestParam(value = "jd_file", required = false) MultipartFile jdFile,
@@ -32,45 +32,42 @@ public class ResumeController {
             @RequestParam("mode") String mode) {
 
         try {
+            String normalizedMode = mode.trim().toLowerCase();
             List<String> resumeTexts = new ArrayList<>();
             List<String> fileNames = new ArrayList<>();
 
-            // Require at least one resume file
-            if (file == null && (files == null || files.isEmpty())) {
-                return ResponseEntity.badRequest().body("{\"error\": \"❌ Resume file(s) are required.\"}");
-            }
-
+            // Resolve file sources
             if (file != null) {
                 resumeTexts.add(extractTextFromFile(file));
                 fileNames.add(cleanFileName(file.getOriginalFilename()));
-            }
-
-            if (files != null && !files.isEmpty()) {
+            } else if (files != null && !files.isEmpty()) {
                 for (MultipartFile multiFile : files) {
                     resumeTexts.add(extractTextFromFile(multiFile));
                     fileNames.add(cleanFileName(multiFile.getOriginalFilename()));
                 }
+            } else {
+                return ResponseEntity.badRequest().body(new ErrorResponse("❌ Resume file(s) are required."));
             }
 
-            // Company mode requires JD
-            if ("company".equalsIgnoreCase(mode)) {
+            // Company mode logic
+            if ("company".equals(normalizedMode)) {
                 if (jdFile == null || jdFile.isEmpty()) {
-                    return ResponseEntity.badRequest().body("{\"error\": \"❌ Job description file (jd_file) is required in company mode.\"}");
+                    return ResponseEntity.badRequest().body(new ErrorResponse("❌ Job description file (jd_file) is required in company mode."));
                 }
 
                 String jdText = extractTextFromFile(jdFile);
                 String analysis = openAIService.compareResumesInBatchWithJD(resumeTexts, fileNames, jdText, "provided@user.com");
                 return ResponseEntity.ok(analysis);
-            } else {
-                // Candidate or developer mode
-                String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, mode);
+
+            } else if ("candidate".equals(normalizedMode)) {
+                String analysis = openAIService.analyzeResume(resumeTexts.get(0), role, normalizedMode);
                 return ResponseEntity.ok(analysis);
+            } else {
+                return ResponseEntity.badRequest().body(new ErrorResponse("❌ Invalid mode. Use 'candidate' or 'company'."));
             }
 
         } catch (IOException e) {
-            return ResponseEntity
-                    .status(500)
-                    .body("{\"error\": \"❌ Failed to process file(s). Please check file format and try again.\"}");
+            return ResponseEntity.status(500).body(new ErrorResponse("❌ Failed to process file(s). Please check file format and try again."));
         }
     }
 
@@ -99,6 +96,17 @@ public class ResumeController {
     }
 
     private String cleanFileName(String fileName) {
-        return fileName.replaceAll("[^a-zA-Z0-9.\\-_\s]", "").trim();
+        return fileName.replaceAll("[^a-zA-Z0-9.\\-_\\s]", "").trim();
+    }
+
+    // Simple error response class
+    public static class ErrorResponse {
+        private final String error;
+        public ErrorResponse(String error) {
+            this.error = error;
+        }
+        public String getError() {
+            return error;
+        }
     }
 }

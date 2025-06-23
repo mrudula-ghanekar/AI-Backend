@@ -1,4 +1,5 @@
 com\resumehelp\config\CorsConfig$1.class
+com\resumehelp\controller\ResumeController$ErrorResponse.class
 com\resumehelp\config\CorsConfig.class
 com\resumehelp\ResumeHelpBackendApplication.class
 com\resumehelp\service\ResumeService.class

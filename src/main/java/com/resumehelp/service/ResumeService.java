@@ -1,30 +1,47 @@
 package com.resumehelp.service;
 
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import java.io.InputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class ResumeService {
 
-    // Function to extract text from PDF resume
     public String extractText(MultipartFile file) throws Exception {
-        String filename = file.getOriginalFilename();
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("❌ Resume file is missing.");
+        }
 
-        if (filename != null && filename.endsWith(".pdf")) {
-            return extractPdfText(file.getInputStream());
-        } else {
-            throw new Exception("❌ Unsupported file type. Please upload a PDF file.");
+        String fileName = file.getOriginalFilename().toLowerCase();
+
+        try (InputStream inputStream = file.getInputStream()) {
+            if (fileName.endsWith(".pdf")) {
+                return extractPdfText(inputStream);
+            } else if (fileName.endsWith(".docx")) {
+                return extractDocxText(inputStream);
+            } else {
+                throw new IllegalArgumentException("❌ Unsupported file type. Please upload a PDF or DOCX file.");
+            }
         }
     }
 
-    // Helper method to extract text from PDF
     private String extractPdfText(InputStream inputStream) throws Exception {
         try (PDDocument document = PDDocument.load(inputStream)) {
             PDFTextStripper stripper = new PDFTextStripper();
             return stripper.getText(document);
+        }
+    }
+
+    private String extractDocxText(InputStream inputStream) throws Exception {
+        try (XWPFDocument docx = new XWPFDocument(inputStream)) {
+            StringBuilder sb = new StringBuilder();
+            docx.getParagraphs().forEach(p -> sb.append(p.getText()).append("\n"));
+            return new String(sb.toString().getBytes(), StandardCharsets.UTF_8);
         }
     }
 }
