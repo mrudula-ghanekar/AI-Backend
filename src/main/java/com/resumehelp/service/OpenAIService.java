@@ -19,10 +19,10 @@ public class OpenAIService {
     public String analyzeResume(String resumeText, String role, String mode) {
         StringBuilder prompt = new StringBuilder();
 
-        prompt.append("You are an intelligent AI career advisor and resume evaluator.\n")
-              .append("Analyze the following resume in the context of the role: '").append(role).append("'.\n\n")
+        prompt.append("You are an intelligent AI career advisor and resume evaluator.\n");
+        prompt.append("Analyze the following resume in the context of the role: '").append(role).append("'.\n\n");
 
-              .append("### Instructions:\n")
+        prompt.append("### Instructions:\n")
               .append("- Extract full name (FirstName LastName), or return \"Unnamed Candidate\" if not found.\n")
               .append("- Determine if the resume fits the role.\n")
               .append("- Highlight strong points (skills, experience, certifications).\n")
@@ -40,10 +40,9 @@ public class OpenAIService {
                   .append("- Give suggestions to improve fit for the role.\n");
         }
 
-        prompt.append("- Respond only with a JSON object starting with '{' and ending with '}'. No arrays as root. No extra text.\n")
-              .append("- Output only valid JSON. No markdown.\n\n")
+        prompt.append("- Output only a valid JSON object. No explanation. No markdown. No headers.\n\n");
 
-              .append("### JSON Format:\n{\n")
+        prompt.append("### JSON Format:\n{\n")
               .append("  \"status\": \"success\",\n")
               .append("  \"candidate_name\": \"Extracted Name or Unnamed Candidate\",\n")
               .append("  \"suited_for_role\": \"Yes\" or \"No\",\n")
@@ -74,8 +73,7 @@ public class OpenAIService {
                 "- Format clearly and include measurable results.\n" +
                 "- Improve readability and optimize for ATS.\n" +
                 "- Use role-specific keywords and strong bullet points.\n" +
-                "- Respond only with a JSON object starting with '{' and ending with '}'.\n" +
-                "- Output only valid JSON. No markdown. No explanation.\n\n" +
+                "- Output only valid JSON. No explanation. No markdown.\n\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"improved_resume\": \"Full optimized resume content\"\n" +
@@ -98,8 +96,7 @@ public class OpenAIService {
                 "- Extract name or fallback to file name.\n" +
                 "- Score (0–100) based on relevance and experience.\n" +
                 "- Sort in descending order of score.\n" +
-                "- Respond only with a JSON object.\n" +
-                "- No explanation. No markdown.\n\n" +
+                "- Output only valid JSON. No explanation. No markdown.\n\n" +
                 "{\n" +
                 "  \"status\": \"success\",\n" +
                 "  \"ranking\": [\n" +
@@ -153,7 +150,8 @@ public class OpenAIService {
         body.put("model", "gpt-4");
         body.put("messages", List.of(Map.of("role", "user", "content", prompt)));
         body.put("temperature", 0.7);
-        body.put("response_format", "json"); // ✅ Strongly recommended
+
+        // ❌ REMOVED invalid: body.put("response_format", "json");
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
@@ -179,21 +177,19 @@ public class OpenAIService {
     private String extractJson(String aiResponse) {
         aiResponse = aiResponse.trim();
 
-        // ✅ First, try JSON Object
-        int objStart = aiResponse.indexOf('{');
-        int objEnd = aiResponse.lastIndexOf('}');
-        if (objStart != -1 && objEnd != -1 && objEnd > objStart) {
-            String json = aiResponse.substring(objStart, objEnd + 1);
-            System.out.println("📥 Extracted JSON Object:\n" + json);
-            return json;
-        }
-
-        // 🔁 Then fallback to JSON Array (only for specific endpoints that expect it)
         int arrayStart = aiResponse.indexOf('[');
         int arrayEnd = aiResponse.lastIndexOf(']');
         if (arrayStart != -1 && arrayEnd != -1 && arrayEnd > arrayStart) {
             String json = aiResponse.substring(arrayStart, arrayEnd + 1);
             System.out.println("📥 Extracted JSON Array:\n" + json);
+            return json;
+        }
+
+        int objStart = aiResponse.indexOf('{');
+        int objEnd = aiResponse.lastIndexOf('}');
+        if (objStart != -1 && objEnd != -1 && objEnd > objStart) {
+            String json = aiResponse.substring(objStart, objEnd + 1);
+            System.out.println("📥 Extracted JSON Object:\n" + json);
             return json;
         }
 
