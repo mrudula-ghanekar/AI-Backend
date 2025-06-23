@@ -27,12 +27,12 @@ public class OpenAIService {
               .append("2. If resume is a close or perfect match, return \"suited_for_role\": \"Yes\". Else, return \"No\".\n")
               .append("3. Extract candidate name. If not available, return \"Unnamed Candidate\".\n")
               .append("4. Provide:\n")
-              .append("   - strong_points: only the skills/projects/tools that are relevant to the role\n")
-              .append("   - weak_points: missing or misaligned areas for the role\n");
+              .append("   - strong_points: Include relevant skills, projects, tools, or notable experience (e.g. 6+ years in any domain is a strength even if misaligned).\n")
+              .append("   - weak_points: Skills or domain gaps for this specific role.\n");
 
         if ("candidate".equalsIgnoreCase(mode)) {
             prompt.append("5. If the resume is NOT suited for the role, suggest alternative roles where the candidate’s skills are a better fit.\n")
-                  .append("6. Provide recommendations:\n")
+                  .append("6. Provide recommendations with at least one fallback in each category:\n")
                   .append("   - online_courses\n")
                   .append("   - youtube_channels\n")
                   .append("   - career_guides\n")
@@ -43,7 +43,7 @@ public class OpenAIService {
                   .append("6. Give improvement suggestions.\n");
         }
 
-        prompt.append("\n⚠️ Output must ONLY be valid JSON with this format:\n\n")
+        prompt.append("\n⚠️ Output must ONLY be valid JSON with this format. NEVER leave values empty. If unsure, return general or fallback suggestions:\n\n")
               .append("{\n")
               .append("  \"status\": \"success\",\n")
               .append("  \"candidate_name\": \"Extracted Name or Unnamed Candidate\",\n")
@@ -54,11 +54,11 @@ public class OpenAIService {
         if ("candidate".equalsIgnoreCase(mode)) {
             prompt.append("  \"improvement_suggestions\": [\"...\"],\n")
                   .append("  \"recommendations\": {\n")
-                  .append("    \"online_courses\": [\"...\"],\n")
-                  .append("    \"youtube_channels\": [\"...\"],\n")
-                  .append("    \"career_guides\": [\"...\"],\n")
-                  .append("    \"alternative_roles\": [\"...\"],\n")
-                  .append("    \"skills_to_learn\": [\"...\"]\n")
+                  .append("    \"online_courses\": [\"If unknown, suggest a general course like 'Coursera Soft Skills for Tech Roles'\"],\n")
+                  .append("    \"youtube_channels\": [\"E.g., Tech With Tim or similar\"] ,\n")
+                  .append("    \"career_guides\": [\"Fallback: blog.careerfoundry.com\"] ,\n")
+                  .append("    \"alternative_roles\": [\"List at least one suitable title like Support Analyst, QA Tester\"] ,\n")
+                  .append("    \"skills_to_learn\": [\"Suggest basics like SQL, Communication, Agile, etc.\"]\n")
                   .append("  }\n");
         } else {
             prompt.append("  \"comparison_score\": \"Ranks higher than XX% of applicants\",\n")
@@ -74,7 +74,8 @@ public class OpenAIService {
         String prompt = "You are an AI resume optimizer. Improve the following resume for the role: '" + role + "'.\n\n" +
                 "- Format it clearly with bullet points.\n" +
                 "- Improve readability and ATS score.\n" +
-                "- Use role-specific keywords.\n\n" +
+                "- Use role-specific keywords.\n" +
+                "- Include soft skills and achievements if missing.\n" +
                 "Return only valid JSON:\n" +
                 "{ \"status\": \"success\", \"improved_resume\": \"...\" }\n\n" +
                 "### Resume:\n" + resumeText;
