@@ -108,8 +108,16 @@ public class OpenAIService {
         String prompt = "You are an AI recruiter comparing resumes to the JD:\n\n"
                 + jobDescription + "\n\n"
                 + "- Score each resume 0–100\n"
+                + "- Extract candidate name or fallback to 'Unnamed'\n"
+                + "- Extract company name from resume if available (fallback to 'N/A')\n"
                 + "- Output sorted JSON array:\n"
-                + "[ { \"file_name\": \"...\", \"candidate_name\": \"...\", \"score\": 91, \"summary\": \"...\" } ]\n\n"
+                + "[ {\n"
+                + "  \"file_name\": \"...\",\n"
+                + "  \"candidate_name\": \"...\",\n"
+                + "  \"company\": { \"name\": \"...\" },\n"
+                + "  \"score\": 91,\n"
+                + "  \"summary\": \"...\"\n"
+                + "} ]\n\n"
                 + "### Resumes:\n" + combined;
 
         return callOpenAI(prompt);
