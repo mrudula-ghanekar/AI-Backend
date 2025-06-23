@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/resume")
+@RequestMapping("/api")
 @CrossOrigin
 public class ResumeController {
 
