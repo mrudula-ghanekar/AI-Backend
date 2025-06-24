@@ -105,20 +105,25 @@ public class OpenAIService {
                     .append(resumeTexts.get(i)).append("\n\n");
         }
 
-        String prompt = "You are an AI recruiter comparing resumes to the JD:\n\n"
-                + jobDescription + "\n\n"
-                + "- Score each resume 0–100\n"
-                + "- Extract candidate name or fallback to 'Unnamed'\n"
-                + "- Extract company name from resume if available (fallback to 'N/A')\n"
-                + "- Output sorted JSON array:\n"
-                + "[ {\n"
-                + "  \"file_name\": \"...\",\n"
-                + "  \"candidate_name\": \"...\",\n"
-                + "  \"company\": { \"name\": \"...\" },\n"
-                + "  \"score\": 91,\n"
-                + "  \"summary\": \"...\"\n"
-                + "} ]\n\n"
-                + "### Resumes:\n" + combined;
+       String prompt = "You are an AI recruiter comparing resumes to the following Job Description:\n\n"
+        + jobDescription + "\n\n"
+        + "- Carefully review each resume for relevance and match to the JD.\n"
+        + "- Score each resume from 0 to 100 based on how well it fits the JD.\n"
+        + "- Extract candidate name from resume, fallback to 'Unnamed' if missing.\n"
+        + "- Extract current or most recent company name, fallback to 'N/A' if missing.\n"
+        + "- Output a JSON object with:\n"
+        + "    1. \"ranked_resumes\": a list of resumes sorted by score (highest first), each with:\n"
+        + "       - file_name\n"
+        + "       - candidate_name\n"
+        + "       - company { name }\n"
+        + "       - score\n"
+        + "       - rank (1 for best match, 2 for second best, etc.)\n"
+        + "       - summary (brief overview)\n"
+        + "       - rank_summary (1-line reason why this resume fits the JD)\n"
+        + "    2. \"top_fits\": list of resume labels (e.g., \"Resume 1\", \"Resume 2\") where score ≥ 80.\n\n"
+        + "Return **only** a valid JSON object with the structure above — no explanation or extra text.\n\n"
+        + "### Resumes:\n"
+        + combined;
 
         return callOpenAI(prompt);
     }
