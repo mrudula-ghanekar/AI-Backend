@@ -18,7 +18,7 @@ public class CorsConfig {
                         .allowedMethods("GET", "POST", "OPTIONS") // Allow POST & OPTIONS
                         .allowedHeaders("*") // All headers
                         .allowCredentials(true); // Allow cookies if needed
-            }
+            } //ok
         };
     }
 }
